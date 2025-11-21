@@ -44,7 +44,20 @@ differently than the other surveys. $smsR$ does not internally scale the
 surveys, so this method does not change that issue. The core of the
 issue lies elsewhere; there is large confounding between the parameter
 estimating survey density dependence (the so-called *power law*) and the
-survey catchability parameter *Q*.
+survey catchability parameter *Q*. The survey *power law* is implemented
+for two reasons that are linked
+
+1)  Avoid retrospective patterns in recruitment, as the in-year
+    assessment can tend to overestimate the recruitment when the only
+    data point is one observation in Q1
+
+2)  Reduce the risk that one observation point leads to a (too) high in
+    year advice, since the 0 year olds in the spring become part of the
+    SSB
+
+$$
+N_{i,\mathrm{survey}} = q_i \, N_i^{p_i}
+$$
 
 Another issue has been massive residual patterns, which has been solved
 by moving the catches into seasons where they did not originate. The
