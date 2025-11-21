@@ -1,3 +1,0 @@
-wd <- "C:/Users/nsja/Dropbox/DTU/BEBRIS/two_seasons"
-
-M <- read.table(file.path(wd),'natmor.in')
