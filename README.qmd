@@ -1,13 +1,13 @@
 ---
 title: "Potential assessment models for North Sea Sprat"
 author: "Nis Sand Jacobsen and Ole Henriksen"
-format: html
+format: gfm
 editor: visual
 ---
 
 ## Introduction
 
-This document serves to compare different potential model configurations for the North Sea sprat. All the models we will show are based on the seasonal $smsR$ model. Until 2025 the model has run with ADMB, but here we use the smsR package available at
+This repository serves to compare different potential model configurations for the North Sea sprat. All the models we will show are based on the seasonal $smsR$ model. Until 2025 the model has run with ADMB, but here we use the smsR package available at
 
 ::: callout-note
 <https://github.com/nissandjac/smsr>
