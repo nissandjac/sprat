@@ -30,17 +30,36 @@ half-year, and quarterly time steps.
 
 ## Current model and issues
 
+### Ole add general description about the seasons and data here
+
+Put the text here Ole
+
+### Issues with the current assessment
+
 The current sprat model originated in the 2018(?) sprat benchmark. In
-the past years the model has han convergence issues, particularly with
+the past years the model has had convergence issues, particularly with
 the maximum gradient being above an acceptable level. The issue has been
-solved by taking the 0-group from the Q1 survey. Another issue has been
-XYZ, which has been solved by moving the catches into seasons where they
-did not originate. Additionally, several of the models parameters are
-estimated on the boundaries, leading to slow model convergence in TMB.
-ADMB has a particular feature that ‘nudges’ parameters away from
-boundary conditions leading to the perception that a parameter has been
-correctly estimated, when in reality it is stuck in an infinitely small
-difference between the estimated parameter and the set boundary.
+solved by taking the 0-group from the Q1 survey and scaling it
+differently than the other surveys. $smsR$ does not internally scale the
+surveys, so this method does not change that issue. The core of the
+issue lies elsewhere; there is large confounding between the parameter
+estimating survey density dependence (the so-called *power law*) and the
+survey catchability parameter *Q*.
+
+Another issue has been massive residual patterns, which has been solved
+by moving the catches into seasons where they did not originate. The
+catches from season 4 has since the benchmark been moved into season 3,
+except for the inital model year (as ADMB sms was then not able to
+converge). There is some confusion to where the catches in season 4 in
+the initial model year come from in the current data files, as the data
+has been added one year at a time.
+
+Additionally, several of the models parameters are estimated on the
+boundaries, leading to slow model convergence in TMB. ADMB has a
+particular feature that ‘nudges’ parameters away from boundary
+conditions leading to the perception that a parameter has been correctly
+estimated, when in reality it is stuck in an infinitely small difference
+between the estimated parameter and the set boundary.
 
 The
 
