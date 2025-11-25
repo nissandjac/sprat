@@ -1,16 +1,8 @@
 ---
 title: "Potential models for NS sprat"
 format: revealjs
----
----
-title: "Potential assessment models for North Sea Sprat"
-author: "Nis Sand Jacobsen and Ole Henriksen"
-format:
-  html:
-    toc: true
-    embed-resources: true
----
 
+---
 ## Introduction
 
 This repository serves to compare different potential model configurations for the North Sea sprat. All the models we will show are based on the seasonal *smsR* model. Until 2025 the model has run with ADMB, but here we use the smsR package available at
@@ -19,7 +11,7 @@ This repository serves to compare different potential model configurations for t
 <https://github.com/nissandjac/smsr>
 :::
 
-## TMB vs ADMB *sms*
+## TMB vs ADMB 
 
 ![Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment.](figures/compare_admb_tmb.png){#fig:survey width="90%"}
 
@@ -84,14 +76,15 @@ print(p1)
 ```{r}
 #| label: fig-ssball
 #| fig-cap: "Comparison of models for 0 group settings"
-#| fig-width: 8
-#| fig-height: 5
+#| layout-ncol: 2
+#| out-width: "60%"
+#| fig-align: "center"
 #| echo: false
 
 knitr::include_graphics(
   c(
-    "compare_R_inputs.png" ,
-      "compare_SSB_inputs.png" 
+    "compare_R_inputs.png",
+    "compare_SSB_inputs.png"
   )
 )
 
@@ -369,4 +362,6 @@ p_R/p_F
 
 ## Adjustments needed before next week
 
-- Fix the poor gradients caused by the catch variance 
+- Fix the poor gradients caused by the catch variance (1 parameter)
+- Self simulate models to ensure stability 
+- Profile M? 

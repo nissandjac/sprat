@@ -399,3 +399,5 @@ p_R/p_F
 ## Adjustments needed before next week
 
 - Fix the poor gradients caused by the catch variance 
+- Self simulate models to ensure stability 
+- Profile M? 
