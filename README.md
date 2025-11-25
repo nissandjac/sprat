@@ -18,7 +18,15 @@ model setups, which can both respect historical assessment methods and
 more modern implementation of e.g., random effects. The package is
 currently used as assessments for the four North Sea Sandeel stocks, and
 a thorough comparison of the TMB and ADMB performance can be seen in the
-WKSANDEEL report.
+WKSANDEEL report. $smsR$ provides close to identical parameter
+estimations as the legacy ADMB SMS code, however there might be some
+minute differences, in particular due to how parameters close to the
+boundary is treated in ADMB and TMB. Below is a figure showing the
+similarity of derived stock quantities from the assessment performed in
+2025
+
+<img src="figures/compare_admb_tmb.png" style="width:70.0%"
+alt="Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment." />
 
 We have chosen model setups that are close to the previous ones, but all
 the models we will provide here has a transparent data flow, and try to
@@ -37,9 +45,14 @@ Put the text here Ole
 ### Issues with the current assessment
 
 The current sprat model originated in the 2018(?) sprat benchmark. In
-the past years the model has had convergence issues, particularly with
-the maximum gradient being above an acceptable level. The issue has been
-solved by taking the 0-group from the Q1 survey and scaling it
+the last couple of years there has been some issues with the model
+leading to ad-hoc fixes in order to
+
+#### Survey power law
+
+In the past years the model has had convergence issues, particularly
+with the maximum gradient being above an acceptable level. The issue has
+been solved by taking the 0-group from the Q1 survey and scaling it
 differently than the other surveys. $smsR$ does not internally scale the
 surveys, so this method does not change that issue. The core of the
 issue lies elsewhere; there is large confounding between the parameter
@@ -55,9 +68,19 @@ for two reasons that are linked
     year advice, since the 0 year olds in the spring become part of the
     SSB
 
+The survey observation function in the model is described as
+
 $$
 N_{i,\mathrm{survey}} = q_i \, N_i^{p_i}
-$$
+$$ Where $N_{i,\mathrm{survey}}$ are the observed numbers at age in the
+survey, $q_i$ is the age specific catchability, $N_i$ are the numbers in
+the total population, and $p_i$ is the density dependent survey power
+law. $p_i$ and $q_i$ are both estimated parameters.
+
+Biologically, the parameter represents that the survey is likely to
+observe relatively more individuals in years with high abundance.
+
+#### Residual patterns in catches
 
 Another issue has been massive residual patterns, which has been solved
 by moving the catches into seasons where they did not originate. The
@@ -67,6 +90,8 @@ converge). There is some confusion to where the catches in season 4 in
 the initial model year come from in the current data files, as the data
 has been added one year at a time.
 
+#### Parameter issues
+
 Additionally, several of the models parameters are estimated on the
 boundaries, leading to slow model convergence in TMB. ADMB has a
 particular feature that ‘nudges’ parameters away from boundary
@@ -74,6 +99,8 @@ conditions leading to the perception that a parameter has been correctly
 estimated, when in reality it is stuck in an infinitely small difference
 between the estimated parameter and the set boundary.
 
-The
+The parameters that are estimated poorly are related to the variance of
+catches in the seasons that has small total catch compared to season 1
+(ref figure here).
 
 ## Comparing the number of seasons

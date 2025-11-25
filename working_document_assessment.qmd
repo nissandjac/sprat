@@ -1,7 +1,7 @@
 ---
 title: "Potential assessment models for North Sea Sprat"
 author: "Nis Sand Jacobsen and Ole Henriksen"
-format: gfm
+format: html
 editor: visual
 ---
 
@@ -13,26 +13,262 @@ This repository serves to compare different potential model configurations for t
 <https://github.com/nissandjac/smsr>
 :::
 
-$smsR$ is an R package which can be used to set up seasonal assessment through few R functions. Each of the functions offer simple to complex model setups, which can both respect historical assessment methods and more modern implementation of e.g., random effects. The package is currently used as assessments for the four North Sea Sandeel stocks, and a thorough comparison of the TMB and ADMB performance can be seen in the WKSANDEEL report.  
+$smsR$ is an R package which can be used to set up seasonal assessment through few R functions. Each of the functions offer simple to complex model setups, which can both respect historical assessment methods and more modern implementation of e.g., random effects. The package is currently used as assessments for the four North Sea Sandeel stocks, and a thorough comparison of the TMB and ADMB performance can be seen in the WKSANDEEL report.
+$smsR$ provides close to identical parameter estimations as the legacy ADMB SMS code, however there might be some minute differences, in particular due to how parameters close to the boundary is treated in ADMB and TMB. Below is a figure showing the similarity of derived stock quantities from the assessment performed in 2025
 
-We have chosen model setups that are close to the previous ones, but all the models we will provide here has a transparent data flow, and try to follow best statistical practices. Over the history of the stock many small modifications have been applied to the model setup and input data to a point where some of the changes are not traceable anymore. By resetting all these changes we provide options for a model with annual, half-year, and quarterly time steps. 
+![Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment.](figures/compare_admb_tmb.png){#fig:survey width=90%}
 
-## Current model and issues 
+We have chosen model setups that are close to the previous ones, but all the models we will provide here has a transparent data flow, and try to follow best statistical practices. Over the history of the stock many small modifications have been applied to the model setup and input data to a point where some of the changes are not traceable anymore. By resetting all these changes we provide options for a model with annual, half-year, and quarterly time steps.
+
+## Current model and issues
 
 ### Ole add general description about the seasons and data here
 
-Put the text here Ole 
-
+Put the text here Ole
 ### Issues with the current assessment
 
-The current sprat model originated in the 2018(?) sprat benchmark. In the past years the model has had convergence issues, particularly with the maximum gradient being above an acceptable level. The issue has been solved by taking the 0-group from the Q1 survey and scaling it differently than the other surveys. $smsR$ does not internally scale the surveys, so this method does not change that issue. The core of the issue lies elsewhere; there is large confounding between the parameter estimating survey density dependence (the so-called *power law*) and the survey catchability parameter *Q*. 
+The current sprat model originated in the 2018(?) sprat benchmark. In the last couple of years there has been some issues with the model leading to ad-hoc fixes in order to get an accepted assessment. Each of these issues are described in detail below. 
+
+#### Survey power law 
+In the past years the model has had convergence issues, particularly with the maximum gradient being above an acceptable level. The issue has been solved by taking the 0-group from the Q1 survey and scaling it differently than the other surveys. $smsR$ does not internally scale the surveys, so this method does not change that issue. The core of the issue lies elsewhere; there is large confounding between the parameter estimating survey density dependence (the so-called *power law*) and the survey catchability parameter *Q*. The survey *power law* is implemented for two reasons that are linked
+
+1)  Avoid retrospective patterns in recruitment, as the in-year assessment can tend to overestimate the recruitment when the only data point is one observation in Q1
+
+2)  Reduce the risk that one observation point leads to a (too) high in year advice, since the 0 year olds in the spring become part of the SSB
+
+The survey observation function in the model is described as 
+
+$$
+N_{i,\mathrm{survey}} = q_i \, N_i^{p_i}
+$$ 
+Where $N_{i,\mathrm{survey}}$ are the observed numbers at age in the survey, $q_i$ is the age specific catchability, $N_i$ are the numbers in the total population, and $p_i$ is the density dependent survey power law. $p_i$ and $q_i$ are both estimated parameters. 
+
+Biologically, the parameter represents that the survey is likely to observe relatively more individuals in years with high abundance. 
+
+#### Residual patterns in catches 
+
+Another issue has been massive residual patterns, which has been solved by moving the catches into seasons where they did not originate. The catches from season 4 has since the benchmark been moved into season 3, except for the inital model year (as ADMB sms was then not able to converge). There is some confusion to where the catches in season 4 in the initial model year come from in the current data files, as the data has been added one year at a time.
+
+#### Parameter issues
+
+Several of the models parameters are estimated on the boundaries, leading to slow model convergence in TMB. ADMB has a particular feature that 'nudges' parameters away from boundary conditions leading to the perception that a parameter has been correctly estimated, when in reality it is stuck in an infinitely small difference between the estimated parameter and the set boundary.
+
+The parameters that are estimated poorly are related to the variance of catches in the seasons that has small total catch compared to season 1 (@fig-catch-sd).
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
 
 
-Another issue has been massive residual patterns, which has been solved by moving the catches into seasons where they did not originate. The catches from season 4 has since the benchmark been moved into season 3, except for the inital model year (as ADMB sms was then not able to converge). There is some confusion to where the catches in season 4 in the initial model year come from in the current data files, as the data has been added one year at a time. 
+library(tidyverse, quietly = TRUE)
+library(smsR)
 
-Additionally, several of the models parameters are estimated on the boundaries, leading to slow model convergence in TMB. ADMB has a particular feature that 'nudges' parameters away from boundary conditions leading to the perception that a parameter has been correctly estimated, when in reality it is stuck in an infinitely small difference between the estimated parameter and the set boundary. 
+dat <- readRDS('sprat_2025.RDS')
 
-The 
+# Look at the estimated parameters 
+
+parms <- getEstimatedParms(dat)
+
+# look at catch parms 
+sdcatch <- getCatchSD(dat$sas$dat,dat$sas)
+sdcatch$age <- ifelse(sdcatch$age == 2, "2+", as.character(sdcatch$age))
+sdcatch$seasonage <- paste(sdcatch$season, sdcatch$age, sep = '-')
 
 
-## Comparing the number of seasons 
+p1 <- ggplot(sdcatch %>% filter(ages < 3), aes(x = season, y = catchSD)) +
+  geom_col(fill = "grey70") +
+  geom_errorbar(aes(ymin = low, ymax = high), width = 0.2) +
+  labs(x = "season", y = "sd", title = "Estimated catch sd by Season and Age") +
+  theme_minimal()+ facet_wrap(~age)+
+  geom_hline(aes(yintercept = sqrt(2)), linetype = 2)+
+  geom_hline(aes(yintercept = sqrt(0.01)), linetype = 2)
+
+```
+
+```{r}
+#| label: fig-catch-sd
+#| fig-cap: "Standard deviation of catches in the current assessment model"
+#| warning: false
+
+print(p1)
+```
+
+## Recruitment settings 
+Since one of current issues with the model is the survey targeting the 0 year olds in Q1, as well as the power parameter associated with that survey, some changes can be made to make these parameters less troublesome. One particular setting that was used during the last benchmark is the sample based variance estimator for the stock-recruitment relationship. This means that the standard deviation of the hockey stick relationship was based on the observed differences from the modeled mean rather than being an observed parameter. Additionally, the likelihood contribution of recruitment was penalized by multiplying the likelihood by 0.1. This way of modeling stock recruitment leads to little relationship between the stock recruitment relationship and the modeled recruitment. However, it is also violating some core assumptions in integrated models, where the estimation model itself is regulating the relative strength between likelihood components. 
+
+We therefore propose two changes to settings that leads to marginal changes in the estimated quantities of spawning biomass:
+
+- Remove the survey power law, as it does not improve the retrospective patterns anyway
+- Estimate the standard deviation of the stock recruitment relationship, and therefore
+- Remove the manual penalty on the likelihood functions. 
+
+The estimates of spawning stock biomass, recruitment, and fishing mortality for the models are shown below. We use the 4 season model, but with the catches assigned to the correct season. All models have some issues with the maximum gradient being above an acceptable level with 4 seasons included. This issue relates to the catch SDs estimated. 
+
+
+## Comparison of SSB Across Models {#sec-ssb}
+
+```{r}
+#| label: fig-ssball
+#| fig-cap: "Comparison of models for 0 group settings"
+#| fig-width: 8
+#| fig-height: 5
+#| echo: false
+
+knitr::include_graphics(
+  c(
+    "compare_R_inputs.png" ,
+      "compare_SSB_inputs.png" 
+  )
+)
+
+```
+
+
+## Comparing the number of seasons
+
+For this benchmark we have decided to start from scratch with the assessment, and not move any catches from one season to the other. To mitigate some of the issues with catch variance, we are here comparing an annual model, a two season model, and the traditional four season model, but without the catches moved between seasons. From the above analysis we went with the no power law, estimate recruitment variation and let the model itself scale the stock recruitment relationship. The choice primarily affects the last year of recruitment. We then reduce the number of seasons to 1, 2, and compare it with the current four seasons to avoid the high catch variance in season 4. For the reduced number of seasons we have adjusted the seasonality of the surveys to match each ot
+
+
+```{r}
+#| echo: false
+#| eval: true 
+#| message: false
+#| 
+
+
+dat_quarter <- readRDS('four_quarters/fourseasons.RDS')
+dat_hy <- readRDS('two_seasons/two_seasons.RDS')
+dat_year <- readRDS('yearly_model/yearly_model.RDS')
+
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+## 2. Put models into a named list ----
+models <- list(
+  quarterly = dat_quarter,
+  halfyear  = dat_hy,
+  yearly    = dat_year
+)
+
+## Helper function to extract SSB/R/F into tidy format ----
+extract_var <- function(model_list, FUN, varname) {
+  lapply(names(model_list), function(mname) {
+    df <- FUN(model_list[[mname]]$dat, model_list[[mname]])
+    df$model <- mname
+    df
+  }) |> 
+    bind_rows() |>
+    rename(value = !!varname)
+}
+
+## 3. Extract SSB, R, F ----
+# Assume your functions return a data.frame with columns: SSB/low/high/years etc.
+## 3. Extract SSB, R, F ----
+# Assume your functions return a data.frame with columns: SSB/low/high/years etc.
+SSB_all <- extract_var(models, getSSB, "SSB")
+R_all   <- extract_var(models, getR,   "R")
+F_all   <- extract_var(models, getFbar,   "Fbar")
+
+## 4. Plotting function ----
+plot_comparison <- function(df, ylab, title) {
+  ggplot(df, aes(x = years, y = value, colour = model)) +
+    geom_line(linewidth = 1) +
+    labs(x = "Year", y = ylab, colour = "Model", title = title) +
+    theme_bw() +
+    theme(legend.position = "top")
+}
+
+## 5. Create plots ----
+p_ssb <- plot_comparison(SSB_all, "SSB", "Comparison of SSB across models")
+p_R   <- plot_comparison(R_all,   "Recruitment (R)", "Comparison of Recruitment (R)")
+p_F   <- plot_comparison(F_all,   "Fishing mortality (F)", "Comparison of Fishing Mortality (F)")
+
+
+
+
+```
+
+## Comparison of SSB, R and F
+
+```{r}
+#| label: fig-ssb
+#| fig-cap: "Comparison of SSB across the quarterly, half-yearly, and yearly models."
+#| echo: false
+p_ssb
+
+```
+
+```{r}
+#| label: fig-r
+#| fig-cap: "Comparison of recruitment (R) across the three models."
+#| echo: false
+p_R
+
+```
+
+```{r}
+#| label: fig-f
+#| fig-cap: "Comparison of fishing mortality (F) across the three models."
+#| echo: false
+p_F
+```
+
+All models provide similar output with respect to SSB, R and F (@fig-ssb, @fig-r, @fig-f), however it seems that a higher number of seasons lead to smaller retrospective patterns (@fig-mr). This effect can also be seen in the retrospective patterns of recruitment (@fig-mr-r), and even more in  the retrospective patterns of F (@fig-mr-F). 
+
+```{r}
+#| label: fig-mr
+#| fig-cap: "Retrospective patterns of spawning stock biomass from the yearly, half year, and quarterly model"
+#| echo: false
+#| warning: false
+#| 
+yearly_mr <- read.table('yearly_model/mohns_table.csv', header = TRUE) %>% mutate(model = 'yearly')
+quarterly_mr <- read.table('four_quarters/mohns_table.csv', header = TRUE) %>% mutate(model = 'quarterly')
+hy_mr <- read.table('two_seasons/mohns_table.csv', header = TRUE) %>% mutate(model = 'half year')
+
+
+df.plot <- rbind(yearly_mr, quarterly_mr, hy_mr)
+
+p.mr.ssb <- ggplot(df.plot, aes(x = years, y = SSB, color = factor(peel)))+
+  geom_line(show.legend = FALSE)+
+  facet_wrap(~model, ncol = 1)+
+  theme_minimal()
+
+print(p.mr.ssb)
+
+```
+
+```{r}
+#| label: fig-mr-r
+#| fig-cap: "Retrospective patterns of recruitment from the yearly, half year, and quarterly model"
+#| echo: false
+#| warning: false
+
+p.mr.R <- ggplot(df.plot, aes(x = years, y = R, color = factor(peel)))+
+  geom_line(show.legend = FALSE)+
+  facet_wrap(~model, ncol = 1)+
+  theme_minimal()
+
+print(p.mr.R)
+
+```
+```{r}
+#| label: fig-mr-F
+#| fig-cap: "Retrospective patterns of F from the yearly, half year, and quarterly model"
+#| echo: false
+#| warning: false
+
+p.mr.F <- ggplot(df.plot, aes(x = years, y = Fbar, color = factor(peel)))+
+  geom_line(show.legend = FALSE)+
+  facet_wrap(~model, ncol = 1)+
+  theme_minimal()
+
+print(p.mr.F)
+
+```
+## Final decisions to take 
+
+- How do we deal with the distribution of catches among seasons. 
+- How do we deal with the power law / 0 group
+- How many number of seasons are we going to use. 

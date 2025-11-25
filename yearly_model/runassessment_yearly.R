@@ -111,15 +111,13 @@ getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 
 plot(sas)
 
-# Save
-ggsave('sprat_assessment.png', x)
-
-
-p2 <- plotDiagnostics(df.tmb, sas)
-
-mr <- mohns_rho(df.tmb, peels = 5, parms, mps, plotfigure = TRUE) # 1 season has high mohns rho 
+mr <- mohns_rho(df.tmb, parms = parms, peels = 5, plotfigure = TRUE) # 1 season has high mohns rho 
 
 saveRDS(sas, file = file.path(wd,'yearly_model.RDS'))
+
+# Save the table 
+write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
+
 
 source(file.path('C:/Users/nsja/Dropbox/DTU/BEBRIS',"compare_TMB_admb.R"))
 

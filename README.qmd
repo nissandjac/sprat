@@ -14,8 +14,14 @@ This repository serves to compare different potential model configurations for t
 :::
 
 $smsR$ is an R package which can be used to set up seasonal assessment through few R functions. Each of the functions offer simple to complex model setups, which can both respect historical assessment methods and more modern implementation of e.g., random effects. The package is currently used as assessments for the four North Sea Sandeel stocks, and a thorough comparison of the TMB and ADMB performance can be seen in the WKSANDEEL report.
+$smsR$ provides close to identical parameter estimations as the legacy ADMB SMS code, however there might be some minute differences, in particular due to how parameters close to the boundary is treated in ADMB and TMB. Below is a figure showing the similarity of derived stock quantities from the assessment performed in 2025
+
+![Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment.](figures/compare_admb_tmb.png){#fig:survey width=70%}
 
 We have chosen model setups that are close to the previous ones, but all the models we will provide here has a transparent data flow, and try to follow best statistical practices. Over the history of the stock many small modifications have been applied to the model setup and input data to a point where some of the changes are not traceable anymore. By resetting all these changes we provide options for a model with annual, half-year, and quarterly time steps.
+
+
+
 
 ## Current model and issues
 
@@ -47,8 +53,12 @@ Biologically, the parameter represents that the survey is likely to observe rela
 
 Another issue has been massive residual patterns, which has been solved by moving the catches into seasons where they did not originate. The catches from season 4 has since the benchmark been moved into season 3, except for the inital model year (as ADMB sms was then not able to converge). There is some confusion to where the catches in season 4 in the initial model year come from in the current data files, as the data has been added one year at a time.
 
+#### Parameter issues
+
 Additionally, several of the models parameters are estimated on the boundaries, leading to slow model convergence in TMB. ADMB has a particular feature that 'nudges' parameters away from boundary conditions leading to the perception that a parameter has been correctly estimated, when in reality it is stuck in an infinitely small difference between the estimated parameter and the set boundary.
 
-The
+The parameters that are estimated poorly are related to the variance of catches in the seasons that has small total catch compared to season 1 (ref figure here).
+
+
 
 ## Comparing the number of seasons
