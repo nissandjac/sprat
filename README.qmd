@@ -13,14 +13,31 @@ This repository serves to compare different potential model configurations for t
 <https://github.com/nissandjac/smsr>
 :::
 
+$smsR$ is an R package which can be used to set up seasonal assessment through few R functions. Each of the functions offer simple to complex model setups, which can both respect historical assessment methods and more modern implementation of e.g., random effects. The package is currently used as assessments for the four North Sea Sandeel stocks, and a thorough comparison of the TMB and ADMB performance can be seen in the WKSANDEEL report.
+$smsR$ provides close to identical parameter estimations as the legacy ADMB SMS code, however there might be some minute differences, in particular due to how parameters close to the boundary is treated in ADMB and TMB. Below is a figure showing the similarity of derived stock quantities from the assessment performed in 2025
 $smsR$ is an R package which can be used to set up seasonal assessment through few R functions. Each of the functions offer simple to complex model setups, which can both respect historical assessment methods and more modern implementation of e.g., random effects. The package is currently used as assessments for the four North Sea sandeel stocks, and a thorough comparison of the TMB and ADMB performance can be seen in the WKSANDEEL report.  
 
-We have chosen model setups that are close to the previous ones, but all the models we will provide here has a transparent data flow, and try to follow best statistical practices. Over the history of the stock many small modifications have been applied to the model setup and input data to a point where some of the changes are not traceable anymore. By resetting all these changes we provide options for a model with annual, half-year, and quarterly time steps. 
+![Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment.](figures/compare_admb_tmb.png){#fig:survey width=70%}
 
-## Current model and issues 
+We have chosen model setups that are close to the previous ones, but all the models we will provide here has a transparent data flow, and try to follow best statistical practices. Over the history of the stock many small modifications have been applied to the model setup and input data to a point where some of the changes are not traceable anymore. By resetting all these changes we provide options for a model with annual, half-year, and quarterly time steps.
+
+
+
+
+## Current model and issues
 
 ### Current Assessment: Legacy $SMS$ in $ADMB$, quarterly setup
 
+Put the text here Ole
+
+### Issues with the current assessment
+
+The current sprat model originated in the 2018(?) sprat benchmark. In the last couple of years there has been some issues with the model leading to ad-hoc fixes in order to 
+
+#### Survey power law 
+In the past years the model has had convergence issues, particularly with the maximum gradient being above an acceptable level. The issue has been solved by taking the 0-group from the Q1 survey and scaling it differently than the other surveys. $smsR$ does not internally scale the surveys, so this method does not change that issue. The core of the issue lies elsewhere; there is large confounding between the parameter estimating survey density dependence (the so-called *power law*) and the survey catchability parameter *Q*. The survey *power law* is implemented for two reasons that are linked
+
+1)  Avoid retrospective patterns in recruitment, as the in-year assessment can tend to overestimate the recruitment when the only data point is one observation in Q1
 The current assessment is the legacy $SMS$ run in single-species mode implemented in $ADMB$ in four seasonal time steps (quarterly). To align biology and data timing, it uses a shifted model year from 1 July to 30 June: Season 1 = calendar Q3 (S1), Season 2 = Q4 (S2), Season 3 = the following Q1 (S3), and Season 4 = the following Q2 (S4). Three surveys are fitted: IBTS Q1 (ages 1–3+, with special handling of age-0), IBTS Q3 (ages 1–3), and HERAS (summer, Q3; ages 1–3). Small and poorly sampled S4 (Q4) catches are reallocated to S1 (Q3) to stabilize estimation. Natural mortality M varies by age/season/year from the multispecies SMS run for the North Sea (with a three-year runing mean carried forward between updates), and maturity is constant (long-term averages from IBTS Q1). The model estimates SSB on 1 July (so recruitment and “birthday” are mid-year), and advice is produced under a B-escapement rule with Fcap.
 Implementation details follow SMS defaults adapted for sprat. The objective function includes catch and survey components (stock–recruit is a down-weighted hockey stick with tiny influence). Mean F is calculated over ages 1–2; selectivity is age- and season-specific. Minimum observation CVs are imposed (e.g., surveys ≥0.30) and zero catches are excluded from the likelihood. For inputs, Norwegian coastal sprat and specific 3.a rectangles are excluded; IBTS indices are built with ALKs and delta-type models (with haul-duration handled in the index calculation) and then used as input to SMS. To reduce retrospective bias from very large 0-group signals, a power function on IBTS Q1 age-0 catchability was added in the sprat implementation, to damping extreme recruitment years; this is on top of the standard survey catchability *Q*. Short-term projections use terminal stock numbers, three-year means for weights/M, constant maturity, the latest exploitation pattern, and a geometric-mean recruitment. 
 
@@ -29,23 +46,28 @@ Implementation details follow SMS defaults adapted for sprat. The objective func
 The current sprat model were develpoed during last benchmark (WKSPRAT, 2018). In the past years the current model (lecacy $ADMB$ setup) has has become fragile had convergence issues. The mdoel have shown with intermittent convergence failures (e.g., high maximum gradients), pronounced retrospective patterns, and large residual structures. In recent years these issue has been solved operationally by making adjustments to the input data. These problems have at times been “fixed” operationally by adjusting inputs- e.g. most notably by scaling the age-0 group from the Q1 survey differently from other surveys and by shifting season-3 catches into season-2 to obtain convergence. Ad-hoc treatments that highlight structural mis-specification rather than data error. Several inputs and settings have also drifted (e.g., inconsistent updates of natural mortality), and parts of the model code are poorly documented, making changes hard to trace.
 Moreover, the scaling of surveys, e.g.  0-group from the Q1, will be carried forward, as $smsR$ does not internally scale the surveys. The issue lies elsewhere;appears to be strong confounding between the parameter estimating survey density dependence (the so-called *power law*) and the survey catchability parameter *Q*, compounded by parameters estimated on boundaries. Together this argues for rebuilding and comparing cleaner $smsR$ in $TMB$ configurations instead of relying on opaque adjustments.
 
-We can inspect the correlation matrix from the two parameters by analysing the assessment output in detail
+2)  Reduce the risk that one observation point leads to a (too) high in year advice, since the 0 year olds in the spring become part of the SSB
 
-```{r}
-dat <- readRDS('sprat_2024.RDS')
+The survey observation function in the model is described as 
 
-sas_2024 <- dat$sas
+$$
+N_{i,\mathrm{survey}} = q_i \, N_i^{p_i}
+$$ 
+Where $N_{i,\mathrm{survey}}$ are the observed numbers at age in the survey, $q_i$ is the age specific catchability, $N_i$ are the numbers in the total population, and $p_i$ is the density dependent survey power law. $p_i$ and $q_i$ are both estimated parameters. 
 
-Q <- sas_2024$reps$jo
+Biologically, the parameter represents that the survey is likely to observe relatively more individuals in years with high abundance. 
 
-```
+#### Residual patterns in catches 
 
+Another issue has been massive residual patterns, which has been solved by moving the catches into seasons where they did not originate. The catches from season 4 has since the benchmark been moved into season 3, except for the inital model year (as ADMB sms was then not able to converge). There is some confusion to where the catches in season 4 in the initial model year come from in the current data files, as the data has been added one year at a time.
 
+#### Parameter issues
+
+Additionally, several of the models parameters are estimated on the boundaries, leading to slow model convergence in TMB. ADMB has a particular feature that 'nudges' parameters away from boundary conditions leading to the perception that a parameter has been correctly estimated, when in reality it is stuck in an infinitely small difference between the estimated parameter and the set boundary.
 Another issue has been massive residual patterns, which has been solved by moving the catches into seasons where they did not originate. The catches from season 4 has since the benchmark been moved into season 3, except for the initial model year (as ADMB sms was then not able to converge). There is some confusion to where the catches in season 4 in the initial model year come from in the current data files, as the data has been added one year at a time. 
 
-Additionally, several of the models parameters are estimated on the boundaries, leading to slow model convergence in TMB. ADMB has a particular feature that 'nudges' parameters away from boundary conditions leading to the perception that a parameter has been correctly estimated, when in reality it is stuck in an infinitely small difference between the estimated parameter and the set boundary. 
-
-The 
+The parameters that are estimated poorly are related to the variance of catches in the seasons that has small total catch compared to season 1 (ref figure here).
 
 
-## Comparing the number of seasons 
+
+## Comparing the number of seasons

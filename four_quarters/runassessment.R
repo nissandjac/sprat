@@ -27,7 +27,7 @@ dat <- getDataSMS(wd,
                    c(1,2),
                    c(1,2)) #c(1,2)),
 
-  powerIN <- list(0, NA, NA)
+  powerIN <- list(NA, NA, NA)
 # Load packages and files #
 
 
@@ -69,11 +69,11 @@ df.tmb <- get_TMB_parameters(
   Fmaxage = 2, # Fully selected fishing mortality age
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
-  # minSDcatch = sqrt(0.01),
-  # minSDsurvey = sqrt(0.2),
-  # penepsC = 1e-10,
-   penepsCmax = 1e-8,
-  # peneps = 1e-10,
+  maxSDcatch = sqrt(2),
+  minSDsurvey = sqrt(0.2),
+  penepsC = 1e-10,
+  penepsCmax = 1e-10,
+  peneps = 1e-10,
   # maxSDcatch = sqrt(2),
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -112,14 +112,18 @@ getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 plot(sas)
 
 # Save
-ggsave('sprat_assessment.png', x)
-
-
 p2 <- plotDiagnostics(df.tmb, sas)
-
 mr <- mohns_rho(df.tmb, peels = 5, parms, mps, plotfigure = TRUE)
 
-library(tidyverse)
-wd_dat <- 'C:/Users/nsja/Dropbox/DTU/SPRAT/SMS_2025/Sprat-div-4_plus_IIIa_S3_19'
-x <- compareTMB_ADMB(wd_dat, sas, df.tmb)
+saveRDS(sas, file.path(wd,'fourseasons.RDS'))
+write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
+
+
+
+g   <- sas$obj$gr(sas$opt$par)
+ord <- order(abs(g), decreasing = TRUE)
+head(cbind(name = names(sas$opt$par)[ord], grad = g[ord]), 10)
+problem_par  <- names(g)[ord[1]]
+print(problem_par)
+
 
