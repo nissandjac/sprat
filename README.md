@@ -12,21 +12,15 @@ ADMB, but here we use the smsR package available at
 >
 > <https://github.com/nissandjac/smsr>
 
-$smsR$ is an R package which can be used to set up seasonal assessment
+*smsR* is an R package which can be used to set up seasonal assessment
 through few R functions. Each of the functions offer simple to complex
 model setups, which can both respect historical assessment methods and
 more modern implementation of e.g., random effects. The package is
 currently used as assessments for the four North Sea Sandeel stocks, and
 a thorough comparison of the TMB and ADMB performance can be seen in the
-WKSANDEEL report. $smsR$ provides close to identical parameter
-estimations as the legacy ADMB SMS code, however there might be some
-minute differences, in particular due to how parameters close to the
-boundary is treated in ADMB and TMB. Below is a figure showing the
-similarity of derived stock quantities from the assessment performed in
-2025 $smsR$ is an R package which can be used to set up seasonal
-assessment through few R functions. Each of the functions offer simple
-to complex model setups, which can both respect historical assessment
-methods and more modern implementation of e.g., random effects. The
-package is currently used as assessments for the four North Sea sandeel
-stocks, and a thorough comparison of the TMB and ADMB performance can be
-seen in the WKSANDEEL report.
+WKSANDEEL report.
+
+## Description of models
+
+All the models we have compared are in
+‘working_document_assessment.html’.
