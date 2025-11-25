@@ -1,9 +1,9 @@
 # Load Catch and write to files # 
 library(tidyverse)
 
-path <- 'data/catches_vs2/'
+path <- 'data/catches_v5/'
 fls <- dir(path)
-fl_names <- c('old_method','four_quarters','two_seasons','yearly_model')
+fl_names <- c('two_seasons','four_quarters','yearly_model', 'old_method')
 
 wd <- 'C:/Users/nsja/Dropbox/DTU/BEBRIS/'
 
@@ -24,7 +24,7 @@ for(i in 1:length(fl_names)){
   dat <- dat %>% arrange(year, season) %>% filter(year > 1973) 
   ifelse(!dir.exists(file.path(wd, fl_names[i])), dir.create(file.path(file.path(wd, fl_names[i]))), FALSE)
   
-  if(i == 4){
+  if(i == 3){
     names(dat)[3] <- 'n0'
     dat$season <- 1
   }
@@ -105,7 +105,7 @@ for(i in 1:length(fl_names)){
   M2$season[M2$season %in% c(1,2)] <- 1
   M2$season[M2$season %in% c(3,4)] <- 2
   
-  if( i == 3){
+  if( fl_names[i] == 'two_seasons'){
     
   
   M2_sum <- M2 %>%
@@ -127,7 +127,7 @@ for(i in 1:length(fl_names)){
               row.names = FALSE, quote = FALSE, col.names = FALSE)}
 
   
-  if(i == 4){
+  if(fl_names[i] == 'yearly_model'){
     M2_sum <- M2 %>%
       pivot_longer(
         cols = starts_with("V"),      # V1–V4

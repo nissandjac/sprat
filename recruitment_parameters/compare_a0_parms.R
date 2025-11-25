@@ -94,10 +94,10 @@ df.power <- get_TMB_parameters(
 
 )
 # Get initial parameter structure
-parms.power <- getParms(df.tmb )
+parms.power <- getParms(df.power)
 # Get non-estimated parameters, based on info in df.tmb
 
-sas.power <- runAssessment(df.power, parms = parms, silent = TRUE)
+sas.power <- runAssessment(df.power, parms = parms.power, silent = TRUE)
 
 powerIN <- c(NA, NA, NA)
 
@@ -137,7 +137,7 @@ df.nopower <- get_TMB_parameters(
   nllfactor = c(1,1,.1) # Factor for relative strength of log-likelihood
   
 )
-
+parms <- getParms(df.nopower)
 sas.nopower <- runAssessment(df.nopower, parms = parms, silent = TRUE)
 
 
@@ -178,6 +178,7 @@ df.estRSD <- get_TMB_parameters(
   
 )
 
+parms <- getParms(df.estRSD)
 sas_nopower_estRSD <- runAssessment(df.estRSD, parms = parms, silent = TRUE)
 
 df.power.estRSD <- get_TMB_parameters(
@@ -216,7 +217,7 @@ df.power.estRSD <- get_TMB_parameters(
   nllfactor = c(1,1,.1) # Factor for relative strength of log-likelihood
   
 )
-
+parms <- getParms(df.power.estRSD)
 sas.power.estRSD <- runAssessment(df.power.estRSD, parms = parms, silent = TRUE)
 
 
@@ -257,9 +258,13 @@ df.estRSD_SR <- get_TMB_parameters(
   
 )
 
+parms <- getParms(df.estRSD_SR)
 sas_nopower_estRSD_SR <- runAssessment(df.estRSD_SR, parms = parms, silent = TRUE)
 
-
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+sas_2024 <- readRDS('sprat_2025.RDS')[[1]]
 
 models <- list(
   "no power - estRSD - SR" = sas_nopower_estRSD_SR,
@@ -297,7 +302,7 @@ p <- ggplot(ssb_all, aes(x = years, y = SSB, colour = model)) +
   labs(x = "Year",
        y = "Spawning stock biomass (SSB)",
        colour = "Model",
-       title = "SSB trajectories") +
+       title = "") +
   theme_bw() +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -336,7 +341,7 @@ p.R <- ggplot(R_all, aes(x = years, y = R, colour = model)) +
   labs(x = "Year",
        y = "Recruitment",
        colour = "Model",
-       title = "SSB trajectories") +
+       title = "") +
   theme_bw() +
   theme(
     plot.title = element_text(hjust = 0.5),

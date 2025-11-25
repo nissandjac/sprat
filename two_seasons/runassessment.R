@@ -70,11 +70,12 @@ df.tmb <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  minSDsurvey = sqrt(0.01),
-  penepsC = 1e-10,
+ # minSDsurvey = .2,
+#  blocks = c(1974, 2010),
+  # penepsC = 1e-10,
   penepsCmax = 1e-8,
-  peneps = 1e-10,
-  # maxSDcatch = sqrt(2),
+  # peneps = 1e-10,
+  maxSDcatch = sqrt(10),
   Fbarage = c(1,2),
   #isFseason = c(1,1,1,0), # Seasons to calculate fishing in
   powers = powerIN,
