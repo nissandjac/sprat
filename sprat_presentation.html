@@ -149,8 +149,8 @@
 </div>
 </div>
 </section>
-<section id="tmb-vs-admb-sms" class="slide level2">
-<h2>TMB vs ADMB <em>sms</em></h2>
+<section id="tmb-vs-admb" class="slide level2">
+<h2>TMB vs ADMB</h2>
 
 <img data-src="figures/compare_admb_tmb.png" style="width:90.0%" class="r-stretch quarto-figure-center" id="fig:survey"><p class="caption">Comparison of sms in ADMB and TMB (smsR). Blue lines show smsR and red does show the output from the accepted assessment.</p></section>
 <section id="current-issues-with-the-assessment." class="slide level2">
@@ -188,7 +188,7 @@ Figure&nbsp;1: Standard deviation of catches in the current assessment model
 <div id="fig-ssball-1" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig">
 <div aria-describedby="fig-ssball-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img data-src="compare_R_inputs.png" class="quarto-figure quarto-figure-center" style="width:48.0%">
+<img data-src="compare_R_inputs.png" class="quarto-figure quarto-figure-center" style="width:80.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ssball-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;2: Comparison of models for 0 group settings
@@ -200,7 +200,7 @@ Figure&nbsp;2: Comparison of models for 0 group settings
 <div id="fig-ssball-2" class="quarto-float quarto-figure quarto-figure-center" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig">
 <div aria-describedby="fig-ssball-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img data-src="compare_SSB_inputs.png" class="quarto-figure quarto-figure-center" style="width:48.0%">
+<img data-src="compare_SSB_inputs.png" class="quarto-figure quarto-figure-center" style="width:80.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ssball-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;3: Comparison of models for 0 group settings
@@ -210,6 +210,16 @@ Figure&nbsp;3: Comparison of models for 0 group settings
 </div>
 </div>
 </div>
+</section>
+<section id="which-settings-to-chose" class="slide level2">
+<h2>Which settings to chose</h2>
+<ul>
+<li>Power law is unstable and correlated with the catchability for Q1 0 year olds</li>
+<li>Estimating the standard deviation of the stock recruitment curve or not<br>
+</li>
+<li>Letting the model itself chose the SR relationship</li>
+<li>Decision only has impact on the last year</li>
+</ul>
 </section>
 <section id="variable-number-of-seasons-in-the-models" class="slide level2">
 <h2>Variable number of seasons in the models</h2>
@@ -265,6 +275,15 @@ Figure&nbsp;11: Bubble plot of half year residuals scaled by sd
 <img data-src="sprat_presentation_files/figure-revealjs/fig-resid-qy-1.png" width="960" class="r-stretch quarto-figure-center" id="fig-resid-qy"><p class="caption">
 Figure&nbsp;12: Bubble plot of quarter year residuals scaled by sd
 </p></section>
+<section id="decisions" class="slide level2">
+<h2>Decisions</h2>
+<ul>
+<li>How many seasons to run?</li>
+<li>Four has the lowest mohns rho, but high residuals and is rather unstable</li>
+<li>Yearly has poor retrospective patterns and residuals, but is fast</li>
+<li>All provide fairly close estimates of SSB / R / F</li>
+</ul>
+</section>
 <section id="maturity-sensitivity" class="slide level2">
 <h2>Maturity sensitivity</h2>
 <p>We compare three maturity ogives,</p>
@@ -298,6 +317,8 @@ Figure&nbsp;14: Time series of R and F with three maturity ogives
 <h2>Adjustments needed before next week</h2>
 <ul>
 <li>Fix the poor gradients caused by the catch variance (1 parameter)</li>
+<li>Self simulate models to ensure stability</li>
+<li>Profile M?</li>
 </ul>
 
 </section>

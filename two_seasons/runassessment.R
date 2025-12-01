@@ -51,7 +51,15 @@ nocatch <- read.table(file.path(wd,'zero_catch_year_season.in'), comment = '#')#
 #Feffort[which(df.tmb$years == 2013),2] <- 0 # This is different two places in the input files
 
 # Save some data for package example
+
+# Calculate the catch yield per season 
+yield <- Catchobs * dat[['mtrx']]$weca[,1:nyear,]
+yield_sum <- apply(yield, c(2, 3), sum)
+rel_contrib <- prop.table(yield_sum, margin = 1)
+
 dat$nocatch <- as.matrix(nocatch)#*0+1
+# dat$nocatch[rel_contrib < .05] <- 0
+#dat$nocatch[length(dat$nocatch)] <- 0
 #dat$nocatch[1,4] <- 0
 #dat$nocatch[dat$effort == 0] <- 0
 powerIN <- list(NA, NA, NA)
@@ -62,6 +70,7 @@ df.tmb <- get_TMB_parameters(
   Surveyobs = Surveyobs, # Survey observations (dimensions age, year, quarter, number of surveys)
   Catchobs = Catchobs, # Catch observations  (dimensions age, year, quarter)
   years = years, # Years to run
+  #endYear = 2020,
   nseason = nseason, # Number of seasons
   ages = ages, # Ages of the species
   recseason = 1, # Season where recruitment occurs
@@ -69,18 +78,11 @@ df.tmb <- get_TMB_parameters(
   Fmaxage = 2, # Fully selected fishing mortality age
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
-  minSDcatch = sqrt(0.01),
- # minSDsurvey = .2,
-#  blocks = c(1974, 2010),
-  # penepsC = 1e-10,
-  penepsCmax = 1e-8,
-  # peneps = 1e-10,
-  maxSDcatch = sqrt(10),
+ # blocks = c(1974, 2015),
   Fbarage = c(1,2),
-  #isFseason = c(1,1,1,0), # Seasons to calculate fishing in
   powers = powerIN,
   endFseason = 2, # which season does fishing stop in the final year of data
-  nocatch = as.matrix(nocatch),
+  nocatch = as.matrix(dat$nocatch),
   surveyStart = surveyStart, #c(0.75,0)
   surveyEnd =  surveyEnd, # c(1,0) Does the survey last throughout the season it's conducted?
   surveySeason = surveySeason, # c(2,1)Which seasons do the surveys occur in
@@ -95,10 +97,13 @@ df.tmb <- get_TMB_parameters(
 # Get initial parameter structure
 parms <- getParms(df.tmb )
 
+#df.tmb$isFseason <- c(1,1)
+#parms$Fseason <- matrix(1, nrow = 1, ncol =2)
+#parms$Fseason <- array(1, )
 # Get non-estimated parameters, based on info in df.tmb
 #parms$logalpha <- log(1287.509)
 #parms$logalpha <- log(1269.427)
-mps <-getMPS(df.tmb, parms)
+mps <-getMPS(df.tmb, parms)#, mapExtra = c('logalpha','logSDrec'))
 #mps$logalpha <- factor(parms$logalpha * NA)
 # Set boundaries
 # This model works best if SDsurvey is mapped
@@ -110,16 +115,15 @@ getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 
 plot(sas)
 
-
 p2 <- plotDiagnostics(df.tmb, sas)
 mr <- mohns_rho(df.tmb, peels = 5, parms, mps, plotfigure = TRUE)
 
 saveRDS(sas, file = file.path(wd,'two_seasons.RDS'))
 write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
-
+write.table(mr$mohns, file = file.path(wd,'mohns_table_result.csv'), row.names = FALSE)
 
 g   <- sas$obj$gr(sas$opt$par)
 ord <- order(abs(g), decreasing = TRUE)
 head(cbind(name = names(sas$opt$par)[ord], grad = g[ord]), 10)
-problem_par  <- names(g)[ord[1]]
+problem_par  <- names(sas$opt$par)[ord[1]]
 print(problem_par)

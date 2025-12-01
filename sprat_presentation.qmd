@@ -77,7 +77,7 @@ print(p1)
 #| label: fig-ssball
 #| fig-cap: "Comparison of models for 0 group settings"
 #| layout-ncol: 2
-#| out-width: "60%"
+#| out-width: "80%"
 #| fig-align: "center"
 #| echo: false
 
@@ -89,6 +89,12 @@ knitr::include_graphics(
 )
 
 ```
+## Which settings to chose 
+
+- Power law is unstable and correlated with the catchability for Q1 0 year olds 
+- Estimating the standard deviation of the stock recruitment curve or not  
+- Letting the model itself chose the SR relationship
+- Decision only has impact on the last year 
 
 ## Variable number of seasons in the models
 
@@ -186,14 +192,40 @@ p_F
 yearly_mr <- read.table('yearly_model/mohns_table.csv', header = TRUE) %>% mutate(model = 'yearly')
 quarterly_mr <- read.table('four_quarters/mohns_table.csv', header = TRUE) %>% mutate(model = 'quarterly')
 hy_mr <- read.table('two_seasons/mohns_table.csv', header = TRUE) %>% mutate(model = 'half year')
+year_mr_tot <- read.table('yearly_model/mohns_table_tot.csv', header = TRUE) %>% mutate(model = 'yearly')
+hy_mr_tot <- read.table('two_seasons/mohns_table_result.csv', header = TRUE) %>% mutate(model = 'half year')
+q_mr_tot <- read.table('four_quarters/mohns_table_tot.csv', header = TRUE) %>% mutate(model = 'quarter')
+
 
 
 df.plot <- rbind(yearly_mr, quarterly_mr, hy_mr)
+mr.plot <- rbind(year_mr_tot, hy_mr_tot, q_mr_tot)
+
+mr.plot.lab <- mr.plot %>%
+  mutate(
+    label = sprintf(
+      "rho[SSB]==%.3f*','~~rho[R]==%.3f*','~~rho[F[bar]]==%.3f",
+      SSB, R, F0
+    )
+  )
 
 p.mr.ssb <- ggplot(df.plot, aes(x = years, y = SSB, color = factor(peel)))+
   geom_line(show.legend = FALSE)+
   facet_wrap(~model, ncol = 1)+
-  theme_minimal() + coord_cartesian(xlim = c(2000, 2024))
+  theme_minimal() + coord_cartesian(xlim = c(2000, 2024)) +
+  geom_text(
+    data = mr.plot.lab,
+    aes(
+      x = 2001,   # adjust if needed
+      y = Inf,
+      label = label
+    ),
+    hjust = 0,
+    vjust = 1.5,
+    size = 3,
+    inherit.aes = FALSE,
+    parse = TRUE   # <- THIS makes rho, subscripts, etc. look nice
+  )
 
 print(p.mr.ssb)
 
@@ -208,7 +240,20 @@ print(p.mr.ssb)
 p.mr.R <- ggplot(df.plot, aes(x = years, y = R, color = factor(peel)))+
   geom_line(show.legend = FALSE)+
   facet_wrap(~model, ncol = 1)+
-  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024))
+  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024)) +
+  geom_text(
+    data = mr.plot.lab,
+    aes(
+      x = 2001,   # adjust if needed
+      y = Inf,
+      label = label
+    ),
+    hjust = 0,
+    vjust = 1.5,
+    size = 3,
+    inherit.aes = FALSE,
+    parse = TRUE   # <- THIS makes rho, subscripts, etc. look nice
+  )
 
 print(p.mr.R)
 
@@ -223,7 +268,20 @@ print(p.mr.R)
 p.mr.F <- ggplot(df.plot, aes(x = years, y = Fbar, color = factor(peel)))+
   geom_line(show.legend = FALSE)+
   facet_wrap(~model, ncol = 1)+
-  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024))
+  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024)) +
+  geom_text(
+    data = mr.plot.lab,
+    aes(
+      x = 2001,   # adjust if needed
+      y = Inf,
+      label = label
+    ),
+    hjust = 0,
+    vjust = 1.5,
+    size = 3,
+    inherit.aes = FALSE,
+    parse = TRUE   # <- THIS makes rho, subscripts, etc. look nice
+  )
 
 print(p.mr.F)
 
@@ -261,6 +319,14 @@ print(bub_hy)
 invisible(bub_qa <- plotBubbles(dat_quarter))
 print(bub_qa)
 ```
+
+## Decisions 
+
+- How many seasons to run? 
+- Four has the lowest mohns rho, but high residuals and is rather unstable 
+- Yearly has poor retrospective patterns and residuals, but is fast 
+- All provide fairly close estimates of SSB / R / F 
+
 ## Maturity sensitivity 
 
 ```{r}

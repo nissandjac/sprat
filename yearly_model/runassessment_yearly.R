@@ -66,6 +66,7 @@ df.tmb <- get_TMB_parameters(
   years = years, # Years to run
   nseason = nseason, # Number of seasons
   ages = ages, # Ages of the species
+#  endYear = 2022,
   recseason = 1, # Season where recruitment occurs
   CminageSeason = c(0),
   Fmaxage = 2, # Fully selected fishing mortality age
@@ -74,9 +75,9 @@ df.tmb <- get_TMB_parameters(
   # minSDcatch = sqrt(0.01),
   # minSDsurvey = sqrt(0.01),
   # penepsC = 1e-10,
-  # penepsCmax = 1e-8,
+  #blocks = c(1974, 2015),
   # peneps = 1e-10,
-  # maxSDcatch = sqrt(2),
+  #minSDcatch = 1e-4,
   Fbarage = c(1,2),
   #isFseason = c(1,1,1,0), # Seasons to calculate fishing in
   powers = powerIN,
@@ -111,13 +112,14 @@ getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 
 plot(sas)
 
-mr <- mohns_rho(df.tmb, parms = parms, peels = 5, plotfigure = TRUE) # 1 season has high mohns rho 
+mr <- mohns_rho(df.tmb, parms = parms, peels = 5, plotfigure = TRUE,
+                lwr = list('logSDcatch' = log(1e-3))) # 1 season has high mohns rho 
 
 saveRDS(sas, file = file.path(wd,'yearly_model.RDS'))
 
 # Save the table 
 write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
-
+write.table(mr$mohns,file = file.path(wd,'mohns_table_tot.csv'), row.names = FALSE)
 
 source(file.path('C:/Users/nsja/Dropbox/DTU/BEBRIS',"compare_TMB_admb.R"))
 

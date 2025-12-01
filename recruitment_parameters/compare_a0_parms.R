@@ -27,7 +27,7 @@ dat <- getDataSMS(wd,
                    c(1,2),
                    c(1,2)) #c(1,2)),
 
-  powerIN <- list(0, NA, NA)
+  powerIN <- list(c(0,1), NA, NA)
 # Load packages and files #
 
 
@@ -70,10 +70,10 @@ df.power <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  maxSDcatch = sqrt(2),
+  maxSDcatch = sqrt(1.5),
   # minSDsurvey = sqrt(0.2),
-  penepsC = 1e-10,
-  penepsCmax = 1e-10,
+  #penepsC = 1e-10,
+  penepsCmax = 1e-8,
   # peneps = 1e-10,
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -88,18 +88,20 @@ df.power <- get_TMB_parameters(
                  c(0,1,2),
                  c(0,1,2),
                  c(0,1,2)),
-  estSD = c(0,0,2), # Estimate
+  estSD = c(0,0,0), # Estimate
   beta = beta, # Hockey stick plateau
   nllfactor = c(1,1,.1) # Factor for relative strength of log-likelihood
 
 )
+df.power$powers[2,1] <- 1
 # Get initial parameter structure
 parms.power <- getParms(df.power)
 # Get non-estimated parameters, based on info in df.tmb
 
 sas.power <- runAssessment(df.power, parms = parms.power, silent = TRUE)
+plot(sas.power)
 
-powerIN <- c(NA, NA, NA)
+
 
 df.nopower <- get_TMB_parameters(
   mtrx = dat[['mtrx']], # List that contains M, mat, west, weca
@@ -114,10 +116,10 @@ df.nopower <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  maxSDcatch = sqrt(2),
+  maxSDcatch = sqrt(1.5),
   # minSDsurvey = sqrt(0.2),
-  penepsC = 1e-10,
-  penepsCmax = 1e-10,
+  #penepsC = 1e-10,
+  penepsCmax = 1e-8,
   # peneps = 1e-10,
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -154,10 +156,10 @@ df.estRSD <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  maxSDcatch = sqrt(2),
+  maxSDcatch = sqrt(1.5),
   # minSDsurvey = sqrt(0.2),
-  penepsC = 1e-10,
-  penepsCmax = 1e-10,
+  #penepsC = 1e-10,
+  penepsCmax = 1e-8,
   # peneps = 1e-10,
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -194,10 +196,10 @@ df.power.estRSD <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  maxSDcatch = sqrt(2),
+  maxSDcatch = sqrt(1.5),
   # minSDsurvey = sqrt(0.2),
-  penepsC = 1e-10,
-  penepsCmax = 1e-10,
+  #penepsC = 1e-10,
+  penepsCmax = 1e-8,
   # peneps = 1e-10,
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -234,10 +236,10 @@ df.estRSD_SR <- get_TMB_parameters(
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
   minSDcatch = sqrt(0.01),
-  maxSDcatch = sqrt(2),
+  maxSDcatch = sqrt(1.5),
   # minSDsurvey = sqrt(0.2),
-  penepsC = 1e-10,
-  penepsCmax = 1e-10,
+  #penepsC = 1e-10,
+  penepsCmax = 1e-8,
   # peneps = 1e-10,
   Fbarage = c(1,2),
   isFseason = c(1,1,1,0), # Seasons to calculate fishing in
@@ -295,7 +297,7 @@ ssb_all <- ssb_all |>
 
 ## 3. Plot SSB trajectories for all models ----
 p <- ggplot(ssb_all, aes(x = years, y = SSB, colour = model)) +
-  geom_line(linewidth = 1) +
+  geom_line(linewidth = .8) +
   # Optional: add uncertainty ribbons if you like
   # geom_ribbon(aes(ymin = low, ymax = high, fill = model),
   #             alpha = 0.15, colour = NA) +
@@ -334,7 +336,7 @@ R_all <- R_all |>
 
 ## 3. Plot SSB trajectories for all models ----
 p.R <- ggplot(R_all, aes(x = years, y = R, colour = model)) +
-  geom_line(linewidth = 1) +
+  geom_line(linewidth = .8) +
   # Optional: add uncertainty ribbons if you like
   # geom_ribbon(aes(ymin = low, ymax = high, fill = model),
   #             alpha = 0.15, colour = NA) +
@@ -368,4 +370,4 @@ AIC_table <- lapply(names(models), function(mname) {
 
 AIC_table
 
-
+write.table(AIC_table,'aic_0year.csv', row.names = FALSE)

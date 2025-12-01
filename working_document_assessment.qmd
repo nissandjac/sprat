@@ -219,16 +219,38 @@ All models provide similar output with respect to SSB, R and F (@fig-ssb, @fig-r
 #| warning: false
 #| 
 yearly_mr <- read.table('yearly_model/mohns_table.csv', header = TRUE) %>% mutate(model = 'yearly')
-quarterly_mr <- read.table('four_quarters/mohns_table.csv', header = TRUE) %>% mutate(model = 'quarterly')
+quarterly_mr <- read.table('four_quarters/mohns_table.csv', header = TRUE) %>% mutate(model = 'quarter')
 hy_mr <- read.table('two_seasons/mohns_table.csv', header = TRUE) %>% mutate(model = 'half year')
+# Read the mohns rho calculations 
+year_mr_tot <- read.table('yearly_model/mohns_table_tot.csv', header = TRUE) %>% mutate(model = 'yearly')
+hy_mr_tot <- read.table('two_seasons/mohns_table_result.csv', header = TRUE) %>% mutate(model = 'half year')
+q_mr_tot <- read.table('four_quarters/mohns_table_tot.csv', header = TRUE) %>% mutate(model = 'quarter')
+
 
 
 df.plot <- rbind(yearly_mr, quarterly_mr, hy_mr)
+mr.plot <- rbind(year_mr_tot, hy_mr_tot, q_mr_tot)
+
+mr.plot$label <- sprintf("rho_SSB = %.3f\nrho_R = %.3f\nrho_F = %.3f",
+                         mr.plot$SSB, mr.plot$R, mr.plot$F0)
+
 
 p.mr.ssb <- ggplot(df.plot, aes(x = years, y = SSB, color = factor(peel)))+
   geom_line(show.legend = FALSE)+
   facet_wrap(~model, ncol = 1)+
-  theme_minimal() + coord_cartesian(xlim = c(2000, 2024))
+  theme_minimal() + coord_cartesian(xlim = c(2000, 2024))  +
+  geom_text(
+    data = mr.plot,
+    aes(
+      x = 2001,   # tweak as needed
+      y = Inf,    # top of each panel
+      label = label
+    ),
+    vjust = 1.2,
+    hjust = 0,
+    size = 3,
+    inherit.aes = FALSE
+  )
 
 print(p.mr.ssb)
 
@@ -243,7 +265,21 @@ print(p.mr.ssb)
 p.mr.R <- ggplot(df.plot, aes(x = years, y = R, color = factor(peel)))+
   geom_line(show.legend = FALSE)+
   facet_wrap(~model, ncol = 1)+
-  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024))
+  theme_minimal()+ coord_cartesian(xlim = c(2000, 2024))+
+  geom_text(
+    data = mr.plot,
+    aes(
+      x = 2001,          # choose a fixed x-position within your xlim
+      y = Inf,           # top of the panel
+      label = label
+    ),
+    vjust = 1.5,
+    hjust = 0,
+    color = "black",
+    size = 3,
+    inherit.aes = FALSE,
+    parse = TRUE        # enables Greek rho + subscript
+  )
 
 print(p.mr.R)
 
