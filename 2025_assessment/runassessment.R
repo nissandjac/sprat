@@ -1,9 +1,9 @@
 library(smsR)
-
+devtools::load_all()
 wd <- "C:/Users/nsja/Dropbox/DTU/BEBRIS/2025_assessment/"
 
 maxage <- 3
-years = 1974:202
+years = 1974:2024
 nyear <- length(years)
 seasons <- 1:4
 nseason <- length(seasons)
@@ -73,13 +73,13 @@ df.tmb <- get_TMB_parameters(
   surveyStart = surveyStart, #c(0.75,0)
   surveyEnd =  surveyEnd, # c(1,0) Does the survey last throughout the season it's conducted?
   surveySeason = surveySeason, # c(2,1)Which seasons do the surveys occur in
-  surveyCV =  surveyCV, #c(1,2)),
-  catchCV = list(c(0,1,2),
+  surveySD =  surveyCV, #c(1,2)),
+  catchSD = list(c(0,1,2),
                  c(0,1,2),
                  c(0,1,2),
                  c(0,1,2)),
   recmodel = 2, # Chose recruitment model (2 = estimated)
-  estCV = c(0,0,2), # Estimate
+  estSD = c(0,0,2), # Estimate
   beta = beta, # Hockey stick plateau
   nllfactor = c(1,1,0.1) # Factor for relative strength of log-likelihood
 

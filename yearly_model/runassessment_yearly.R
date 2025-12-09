@@ -21,34 +21,27 @@ dat <- getDataSMS(wd,
                         seasons = seasons
 
 )
-  Qminage = c(0,1,1) # Qminage = c(0,1) minimum age in surveys
-  Qmaxage = c(3,3,3) #Qmaxage = c(1,3)
   surveyStart = c(0,0.5,0.6) # Survey starts in jan, juli, august 
   surveyEnd =  c(.2,.58,0.7) # c(1,0) Does the survey last throughout the season it's conducted?
   surveySeason = c(1,1,1) # c(2,1)Which seasons do the surveys occur in
-  surveyCV =  list(c(0,1),
+  Qminage = c(0,1,1) # Qminage = c(0,1) minimum age in surveys
+  Qmaxage = c(3,3,1) #Qmaxage = c(1,3)
+  
+  surveyCV =  list(c(0,1,2),
                    c(1,2),
-                   c(1,2)) #c(1,2)),
-
-# Load packages and files #
-
+                   c(1)
+  ) #c(1,2)),
+  
 
 ages <- 0:maxage
 beta <- 90000
 
 # Fishing eff
-#dat$survey$eff[dat$survey$Survey == "IBTS_Q1_0"] <- 1e-5
 # Normalize effort to 1
 # Format input data matrices into TMB style
 # mtrx <- sumtable_to_matrix(sandeel.age)
 Surveyobs <- survey_to_matrix(dat[['survey']], years)
-# Rescale the recruitment stuff
-# Adjusted this to get it on the same scale as the other Qs
-# Surveyobs[1,,1] <- Surveyobs[1,,1] * 0.001
-# Surveyobs[Surveyobs < 0] <- -99
-
 Catchobs <- df_to_matrix(dat[['canum']], season =  1)
-
 nocatch <- read.table(file.path(wd,'zero_catch_year_season.in'), comment = '#')#, skip = 3)
 #Feffort[which(df.tmb$years == 2013),2] <- 0 # This is different two places in the input files
 
@@ -66,19 +59,13 @@ df.tmb <- get_TMB_parameters(
   years = years, # Years to run
   nseason = nseason, # Number of seasons
   ages = ages, # Ages of the species
-#  endYear = 2022,
   recseason = 1, # Season where recruitment occurs
   CminageSeason = c(0),
   Fmaxage = 2, # Fully selected fishing mortality age
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
-  # minSDcatch = sqrt(0.01),
-  # minSDsurvey = sqrt(0.01),
-  # penepsC = 1e-10,
-  #blocks = c(1974, 2015),
-  # peneps = 1e-10,
-  #minSDcatch = 1e-4,
   Fbarage = c(1,2),
+ # blocks = c(1974, 2015),
   #isFseason = c(1,1,1,0), # Seasons to calculate fishing in
   powers = powerIN,
   endFseason = 2, # which season does fishing stop in the final year of data
@@ -97,13 +84,7 @@ df.tmb <- get_TMB_parameters(
 # Get initial parameter structure
 parms <- getParms(df.tmb )
 
-# Get non-estimated parameters, based on info in df.tmb
-#parms$logalpha <- log(1287.509)
-#parms$logalpha <- log(1269.427)
 mps <-getMPS(df.tmb, parms)
-#mps$logalpha <- factor(parms$logalpha * NA)
-# Set boundaries
-# This model works best if SDsurvey is mapped
 sas <- runAssessment(df.tmb, parms = parms,mps = mps, silent = TRUE)
 sas$reps
 sas$opt$time_to_eval
@@ -111,6 +92,8 @@ sas$opt$time_to_eval
 getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 
 plot(sas)
+plotBubbles(sas)
+
 
 mr <- mohns_rho(df.tmb, parms = parms, peels = 5, plotfigure = TRUE,
                 lwr = list('logSDcatch' = log(1e-3))) # 1 season has high mohns rho 
@@ -118,6 +101,7 @@ mr <- mohns_rho(df.tmb, parms = parms, peels = 5, plotfigure = TRUE,
 saveRDS(sas, file = file.path(wd,'yearly_model.RDS'))
 
 # Save the table 
+
 write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
 write.table(mr$mohns,file = file.path(wd,'mohns_table_tot.csv'), row.names = FALSE)
 

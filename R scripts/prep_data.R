@@ -40,10 +40,17 @@ for(i in 1:length(fl_names)){
     filter(year <= cyear ) %>% 
     relocate(paste('mw',0:maxage, sep=''), hashtag) %>% arrange(year, season)
 
-  # Add 2025 (5 year average) (fix to whatever is used for sprat)
+  
+  tmp.plot <- tmp.weca %>% pivot_longer(1:4)
+  
+  ggsave('weca_issues.png',
+         ggplot(tmp.plot, aes(x = year, y= value, color = name))+geom_line()+
+    facet_wrap(~season, nrow = 2)
+  )
+  # Add 2025 (3 year average) (fix to whatever is used for sprat)
   add_rows <- lapply(1:nseason, function(j) {
     tmp.weca %>%
-      dplyr::filter(year %in% (endyr-4):endyr, season == j) %>%
+      dplyr::filter(year %in% (endyr-2):endyr, season == j) %>%
       dplyr::summarise(dplyr::across(1:nage, ~ mean(.x, na.rm = TRUE))) %>%
       dplyr::mutate(hashtag = "#", year = endyr + 1, season = j)
   })

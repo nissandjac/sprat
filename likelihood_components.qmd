@@ -1,0 +1,363 @@
+---
+title: "Sprat assessments"
+author: "Nis Sand Jacobsen"
+format: revealjs
+---
+
+## Candidate models 3.0
+
+Model choices:
+
+-   2 blocks or 4 blocks
+-   Selectivity block in 2015 or 2020
+-   Selectivity block in 2010 and 2020
+
+## Relative catch in the two and four seasons
+
+```{r}
+two_2020 <- readRDS('two_seasons/two_seasons_block_2020.RDS')
+two_2015 <- readRDS('two_seasons/two_seasons_block_2015.RDS')
+two_2010 <- readRDS('four_quarters/four_seasons_sel_2010.RDS')
+
+
+four_2020 <- readRDS('four_quarters/four_seasons_sel_2020.RDS')
+four_2015 <- readRDS('four_quarters/four_seasons_sel_2015.RDS')
+four_2010 <- readRDS('four_quarters/four_seasons_sel_2010.RDS')
+
+library(smsR)
+library(tidyverse, quietly = TRUE)
+
+yieldtwo <- two_2020$dat$Catchobs * two_2020$dat$weca[,1:two_2020$dat$nyear,]
+yield_sumtwo<- apply(yieldtwo, c(2, 3), sum)
+rel_contribtwo <- as.data.frame(prop.table(yield_sumtwo, margin = 1))
+rel_contribtwo <- rel_contribtwo %>% mutate(years = as.numeric(rownames(rel_contribtwo))) %>% 
+    pivot_longer(1:2)
+
+yieldfour <- four_2020$dat$Catchobs * four_2020$dat$weca[,1:four_2020$dat$nyear,]
+yield_sumfour<- apply(yieldfour, c(2, 3), sum)
+rel_contribfour <- as.data.frame(prop.table(yield_sumfour, margin = 1))
+rel_contribfour <- rel_contribfour %>% mutate(years = as.numeric(rownames(rel_contribfour))) %>% 
+    pivot_longer(1:4)
+
+
+```
+
+```{r}
+#| label: fig-yieldcontrib
+#| fig-cap: "Yield per season"
+#| layout-ncol: 2
+#| out-width: "100%"
+#| fig-width: 6
+#| fig-height: 4
+
+p1 <- ggplot(rel_contribtwo, aes(x = years, y= value, color = factor(name)))+
+  geom_line()+theme_classic()+
+  theme(legend.position = 'top',
+        legend.title = element_blank())+
+  geom_vline(aes(xintercept = 2015), linetype=  2)+
+  geom_vline(aes(xintercept = 2020), linetype=  2)
+
+p2 <- ggplot(rel_contribfour, aes(x = years, y= value, color = factor(name)))+
+  geom_line()+theme_classic()+
+  theme(legend.position = 'top',
+        legend.title = element_blank())+
+  geom_vline(aes(xintercept = 2015), linetype=  2)+
+  geom_vline(aes(xintercept = 2020), linetype=  2)
+
+p1
+p2
+
+```
+
+## Two seasons (2015 block)
+
+```{r}
+#| label: fig-two2015bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(two_2015)
+
+```
+
+## Two seasons (2020 block)
+
+```{r}
+#| label: fig-two2020bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(two_2020)
+
+```
+## Two seasons (2010 and 2010 block)
+
+```{r}
+#| label: fig-two2010bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(two_2010)
+
+```
+
+## Four seasons (2015 block)
+
+```{r}
+#| label: fig-four2015bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(four_2015)
+
+```
+
+## Four seasons (2020 block)
+
+```{r}
+#| label: fig-four2020bub
+#| fig-cap: "Residuals scaled by SD"#| layout-ncol: 2
+
+plotBubbles(four_2020)
+
+```
+
+## Four seasons (2010 and 2010 block)
+
+```{r}
+#| label: fig-four2010bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(four_2010)
+
+```
+
+
+
+```{r}
+
+# calculate the likelihood contributions for each of the modell
+df <- as.data.frame(rbind(
+two_2015$reps$value[names(two_2015$reps$value) == 'ansvec'][1:3],
+two_2020$reps$value[names(two_2020$reps$value) == 'ansvec'][1:3],
+four_2015$reps$value[names(four_2015$reps$value) == 'ansvec'][1:3],
+four_2020$reps$value[names(four_2020$reps$value) == 'ansvec'][1:3]
+  ) 
+)
+names(df) <- c('survey', 'catch','SRR')
+
+df$seasons <- c(2,2,4,4)
+df$selectivity <- c('2015','2020','2015','2020')
+
+
+```
+## Negative log likelihood components 
+```{r}
+#| label: tab-nll
+#| tbl-cap: "Negative log-likelihood components by model."
+#| echo: false
+
+library(dplyr)
+library(kableExtra)
+
+df %>% mutate(
+  survey = round(survey, 2),
+  catch  = round(catch, 2),
+  SRR    = round(SRR, 2)
+) %>% #select(-models) %>% 
+  rename(
+  #Model        = models,
+  `Survey NLL` = survey,
+  `Catch NLL`  = catch,
+  `SRR NLL`    = SRR
+  )  %>% 
+kable(format = "html",
+align = c("l", "r", "r", "r")) |>
+kable_styling(full_width = FALSE,
+position   = "center",
+font_size  = 18)
+
+```
+
+## Mohns rho
+
+```{r}
+#| label: tbl-mohn
+#| tbl-cap: "Mohn's rho values across models"
+#| echo: false
+#| 
+df.mohn <- rbind(
+  read.table('four_quarters/mohns_table_tot_block_2015.csv', header = TRUE) %>% 
+    mutate(seasons = 4, selectivity = '2015'),
+  read.table('four_quarters/mohns_table_tot_block_2020.csv', header = TRUE) %>% 
+    mutate(seasons = 4, selectivity = '2020'),
+  read.table('four_quarters/mohns_table_tot_block_2010.csv', header = TRUE) %>% 
+    mutate(seasons = 4, selectivity = '2010'),
+  read.table('two_seasons/mohns_table_result_block_2015.csv', header = TRUE) %>% 
+    mutate(seasons = 2, selectivity = '2015'),
+  read.table('two_seasons/mohns_table_result_block_2020.csv', header = TRUE) %>% 
+    mutate(seasons = 2, selectivity = '2020'),
+  read.table('two_seasons/mohns_table_result_block_2010.csv', header = TRUE) %>% 
+    mutate(seasons = 2, selectivity = '2010')
+)
+
+# Add convergence times 
+calc_time <- c(four_2015$opt$time_to_eval,
+               four_2020$opt$time_to_eval,
+               four_2010$opt$time_to_eval,
+               two_2015$opt$time_to_eval,
+               two_2020$opt$time_to_eval,
+               two_2010$opt$time_to_eval
+)
+             
+mgradient <- c(max(abs(four_2015$reps$gradient.fixed)),
+               max(abs(four_2020$reps$gradient.fixed)),
+              max(abs(four_2010$reps$gradient.fixed)),
+               max(abs(two_2015$reps$gradient.fixed)),
+               max(abs(two_2020$reps$gradient.fixed)),
+              max(abs(two_2010$reps$gradient.fixed))
+)
+
+df.mohn <- df.mohn %>% mutate(calc_time = calc_time, 
+                              mgradient = mgradient) 
+  
+df.mohn %>%
+  kable(
+    format   = "html",
+    align    = c("l", "r", "r", "r", "l", "r", "r"),
+    digits   = 3,
+    col.names = c(
+      "SSB", "R", "F", "Seasons", "Selectivity",
+      "Estimation time", "Max absolute gradient"
+    )
+  ) %>%
+  kable_styling(
+    full_width = FALSE,
+    position   = "center",
+    font_size  = 18
+  )
+```
+
+## Leave survey out (2 seasons )
+
+:::{#fig-two-leaveouts}
+![](two_seasons/leavesurvey_out_2015.png){width=32%}
+![](two_seasons/leavesurvey_out_2020.png){width=32%}
+![](two_seasons/leavesurvey_out_2010.png){width=32%}
+**Figure:** Comparison of models with 2015, 2020, and 2010 blocks. Four seasons. 
+:::
+
+## Leave survey out (4 seasons )
+
+:::{#fig-four-leaveouts}
+![](four_quarters/leavesurvey_out_2015.png){width=32%}
+![](four_quarters/leavesurvey_out_2020.png){width=32%}
+![](four_quarters/leavesurvey_out_2010.png){width=32%}
+**Figure:** Comparison of models with 2015, 2020, and 2010 blocks. Four seasons. 
+:::
+
+## SSB estimations
+
+```{r}
+#| label: fig-ssball
+#| fig-cap: "Comparison of SSB in models for selectivity and seasonal settings."
+#| out-width: "100%"
+#| fig-align: "center"
+#| echo: false
+
+
+ssb <- rbind(
+  getSSB(two_2015$dat,two_2015) %>% mutate(seasons = 2, sel = '2015'),
+  getSSB(two_2020$dat,two_2020)%>% mutate(seasons = 2, sel = '2020'),
+  getSSB(four_2015$dat,four_2015)%>% mutate(seasons = 4, sel = '2015'),
+  getSSB(four_2020$dat,four_2020)%>% mutate(seasons =4, sel = '2020'),
+  getSSB(four_2010$dat,four_2010)%>% mutate(seasons =4, sel = '2010'),
+  getSSB(two_2010$dat,four_2010)%>% mutate(seasons =2, sel = '2010')
+
+)
+  
+
+
+p.ssb <- ggplot(ssb, aes(x = years, y= SSB, color = paste(seasons,sel)))+
+  geom_line()+theme_classic()+
+  geom_ribbon(aes(ymin = low, ymax = high, fill = paste(seasons, sel)), 
+              alpha = .1, linetype = 0, show.legend = FALSE)+
+  theme(legend.position = 'top', legend.title = element_blank())
+  
+
+p.ssb
+
+```
+
+## Comparison of R
+
+```{r}
+#| label: fig-Rall
+#| fig-cap: "Comparison of R in models for selectivity and seasonal settings."
+#| out-width: "100%"
+#| fig-align: "center"
+#| echo: false
+
+
+R <- rbind(
+  getR(two_2015$dat,two_2015) %>% mutate(seasons = 2, sel = '2015'),
+  getR(two_2020$dat,two_2020)%>% mutate(seasons = 2, sel = '2020'),
+  getR(four_2015$dat,four_2015)%>% mutate(seasons = 4, sel = '2015'),
+  getR(four_2020$dat,four_2020)%>% mutate(seasons =4, sel = '2020')
+
+)
+  
+
+
+pR <- ggplot(R, aes(x = years, y= R, color = paste(seasons,sel)))+
+  geom_line()+theme_classic()+
+  geom_ribbon(aes(ymin = low, ymax = high, fill = paste(seasons, sel)), 
+              alpha = .1, linetype = 0, show.legend = FALSE)+
+  theme(legend.position = 'top', legend.title = element_blank())
+  
+
+pR
+
+```
+
+## Catch comparison 
+
+
+```{r}
+#| label: fig-totyield
+#| fig-cap: "Comparison of estimated and reported catches"
+#| out-width: "100%"
+#| fig-align: "center"
+#| echo: false
+
+two_s_c <- read.csv('data/catches_v5/canum_weca_jul_jun_halfyear_IV_with_Q2_no_SMS_no_SEcoast_v28.csv')
+four_s_c <- read.csv('data/catches_v5/canum_weca_jul_jun_halfyear_IV_with_Q2_no_SMS_no_SEcoast_v28.csv')
+
+# Get yields
+sop_two <- getYield(two_2015$dat)
+sop_four <- getYield(four_2020$dat)
+
+# Estimated yields 
+catch_two <- getCatch(two_2015$dat, two_2015)
+catch_four <- getCatch(four_2015$dat, four_2015)
+
+# Create data frame and plot 
+df.plot <- data.frame(year = two_s_c$year,
+                      yield = two_s_c$ton) %>% group_by(year) %>% filter(year < 2025) %>% 
+  summarise(yield = sum(yield)) %>% mutate(model = 'ton') %>% 
+  mutate(sop = sop_two$Yield, estCatch = catch_two$Catch,
+         low = catch_two$low, high = catch_two$high,
+         estCatch4 = catch_four$Catch,
+         low4 = catch_four$low,
+         high4 = catch_four$high) 
+
+
+
+ggplot(df.plot, aes(x = year, y = sop))+geom_line() + 
+  geom_line(aes(y = yield), col = 'red')+
+  geom_line(aes(y = estCatch), col = 'black') +
+  geom_ribbon(aes(ymin = low, ymax = high), fill = 'black', alpha = .15)+
+  geom_line(aes(y = estCatch4), col = 'darkgreen') +
+  geom_ribbon(aes(ymin = low4, ymax = high4), fill = 'darkgreen', alpha = .15)+
+  theme_classic()+
+  scale_y_continuous('Total catches')
+
+
+```
+

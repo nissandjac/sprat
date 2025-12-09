@@ -1,0 +1,245 @@
+---
+title: "Sprat vs Inf"
+author: "nis sand jacobsen"
+format: revealjs
+---
+
+
+```{r}
+#| echo: false
+#| message: false
+
+library(smsR)
+library(tidyverse)
+
+wd <- "C:/Users/nsja/Dropbox/DTU/BEBRIS/two_seasons/"
+#devtools::load_all()
+# M is not correct here
+maxage <- 3
+years = 1974:2024
+nyear <- length(years)
+seasons <- 1:2
+nseason <- length(seasons)
+
+dat <- getDataSMS(wd,
+                  maxage = maxage,
+                  survey.age = list(0:3, 1:3, 1:3), # Ages in the two surveys
+                  survey.years = list(1982:2024, 1992:2024, 2006:2024),
+                  survey.names = c('IBTS_Q1','IBTS_Q3', 'HERAS'),
+                  survey.quarter = c(3,1, 1),
+                  years = years,
+                  seasons = seasons
+
+)
+
+Qminage = c(0,1,1) # Qminage = c(0,1) minimum age in surveys
+Qmaxage = c(3,3,3) #Qmaxage = c(1,3)
+surveyStart = c(0,0.17,0) #c(0.75,0)
+surveyEnd =  c(.5,.33,0.17) # c(1,0) Does the survey last throughout the season it's conducted?
+surveySeason = c(2,1,1) # c(2,1)Which seasons do the surveys occur in
+# Load packages and files #
+Catchobs <- df_to_matrix(dat[['canum']], season =  1:2)
+
+
+ages <- 0:maxage
+beta <- 90000
+Surveyobs <- survey_to_matrix(dat[['survey']], years)
+#Surveyobs[4,,2] <- -1#Surveyobs[2,years %in% c(2023),2]*0.5
+Surveyobs[4,,3] <- -1#Surveyobs[3,years %in% c(2024),2]*2
+
+Qminage = c(0,1,1) # Qminage = c(0,1) minimum age in surveys
+Qmaxage = c(3,3,2) #Qmaxage = c(1,3)
+
+surveyCV =  list(c(0,1,2),
+                 c(1,2,3),
+                 c(1)
+                 ) #c(1,2)),
+
+
+library(tidyverse)
+
+
+nocatch <- read.table(file.path(wd,'zero_catch_year_season.in'), comment = '#')#, skip = 3)
+powerIN <- c(NA, NA, NA)
+
+
+df.tmb <- get_TMB_parameters(
+  mtrx = dat[['mtrx']], # List that contains M, mat, west, weca
+  Surveyobs = Surveyobs, # Survey observations (dimensions age, year, quarter, number of surveys)
+  Catchobs = Catchobs, # Catch observations  (dimensions age, year, quarter)
+  years = years, # Years to run
+  #endYear = 2023,
+  leavesurveyout = c(1,1,1),
+  nseason = nseason, # Number of seasons
+  ages = ages, # Ages of the species
+  recseason = 1, # Season where recruitment occurs
+  CminageSeason = c(0,0),
+  Fmaxage = 3, # Fully selected fishing mortality age
+  Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
+  Qmaxage = Qmaxage, #Qmaxage = c(1,3)
+  #minSDcatch = .1,
+  minSDsurvey = .3,
+  powers = powerIN,
+  startYear = 1980,
+  blocks = c(1974,2015),
+  maxSDcatch = 10,
+  Fbarage = c(1,2),
+  tuneCatch = 1,
+  #randomF = 1,
+  endFseason = 1, # which season does fishing stop in the final year of data
+  nocatch = as.matrix(nocatch),
+  surveyStart = surveyStart, #c(0.75,0)
+  surveyEnd =  surveyEnd, # c(1,0) Does the survey last throughout the season it's conducted?
+  surveySeason = surveySeason, # c(2,1)Which seasons do the surveys occur in
+  surveySD =  surveyCV, #c(1,2)),
+  catchSD = list(c(0,1,2),
+                 c(0,1,2)),
+  csd_break = c(2006),
+  estSD = c(0,0,0), # Estimate
+  beta = beta, # Hockey stick plateau
+  nllfactor = c(1,1,1) # Factor for relative strength of log-likelihood
+
+)
+
+parms <- getParms(df.tmb)
+mps <-getMPS(df.tmb, parms)# Set boundaries
+sas <- runAssessment(df.tmb, parms = parms,mps = mps, silent = TRUE, debug = TRUE)
+
+```
+
+```{r}
+parms <- getParms(df.tmb)
+mps <-getMPS(df.tmb, parms)# Set boundaries
+mps$logbeta <- NULL
+sas2 <- runAssessment(df.tmb, parms = parms,mps = mps, silent = TRUE, debug = TRUE)
+#mr2 <- mohns_rho(df.tmb, parms, peels = 5, mps = mps)
+
+```
+
+
+# Yield
+
+```{r}
+
+yobs0.1 <- getYield(sas$dat)
+yobs0.2 <- getYield(sas2$dat)
+
+
+yield_est <- rbind(
+              getCatch(sas$dat, sas) %>% mutate(Blim = ' Blim fixed'),
+              getCatch(sas2$dat, sas2)%>% mutate(Blim = 'estimate Blim')
+)
+
+yield_est$catchobs <-c(yobs0.1$Yield,yobs0.2$Yield)
+
+
+ggplot(yield_est, aes(x = years, y = Catch, color = factor(Blim)))+
+  geom_line()+
+  theme_classic()+
+  geom_point(aes(y = catchobs), col = 'black')
+#  facet_wrap(~seasons)
+  #geom_ribbon(aes(ymin = low, ymax = high), alpha = .2, linestyle = 0)
+
+
+
+```
+## SSB
+```{r}
+
+
+ssb_est <- rbind(
+              getSSB(sas$dat, sas) %>% mutate(Blim = 'Fixed'),
+              getSSB(sas2$dat, sas2)%>% mutate(Blim = 'Estimated Blim')
+)
+
+
+ggplot(ssb_est, aes(x = years, y = SSB, color = factor(Blim)))+
+  geom_line()+
+  theme_classic()#  facet_wrap(~seasons)
+  #geom_ribbon(aes(ymin = low, ymax = high), alpha = .2, linestyle = 0)
+
+
+
+```
+## R
+```{r}
+
+R_est <- rbind(
+              getR(sas$dat, sas) %>% mutate(Blim = 'Fixed'),
+              getR(sas2$dat, sas2)%>% mutate(Blim = 'Estimated Blim')
+)
+
+
+ggplot(R_est, aes(x = years, y = R, color = factor(Blim), fill = factor(Blim)))+
+  geom_line()+
+  theme_classic()+#  facet_wrap(~seasons)
+  geom_ribbon(aes(ymin = low, ymax = high), alpha = .2, linetype = 0)
+
+
+
+```
+
+## Stock recruitment 
+```{r}
+
+source('C:/Users/nsja/Dropbox/DTU/BEBRIS/R scripts/getSR.R')
+SR_est <- rbind(
+              getSR(sas$dat, sas) %>% mutate(Blim = 'Fixed'),
+              getSR(sas2$dat, sas2)%>% mutate(Blim = 'Estimated Blim')
+)
+
+sr_true <- data.frame(R= R_est$R,
+                      SSB = ssb_est$SSB[1:(nrow(ssb_est)-2)],
+                      Blim = R_est$Blim,
+                      years = R_est$years
+                      )
+  
+  
+ggplot(SR_est, aes(x = SSB, y = SR, color = factor(Blim), fill = factor(Blim)))+
+  geom_point(data = sr_true, aes(y = R))+
+  geom_line(aes(y= SR))+
+  theme_classic()+ facet_wrap(~Blim, nrow = 2)+
+  geom_vline(aes(xintercept = sas$dat$betaSR))
+
+
+
+
+
+```
+## SR 2
+```{r}
+sr_2 <- SR_est %>% filter(Blim == 'Fixed')
+
+ggplot(sr_2, aes(x = SSB, y = SR, color = factor(Blim), fill = factor(Blim))) +
+  geom_line() +
+  ## Years as text instead of points
+  geom_text(data = sr_true %>% filter(Blim == "Fixed"),
+            aes(label = years, y = R, ), size = 3, show.legend = FALSE) +
+  ## True SR points
+  ## SR curve
+  geom_hline(aes(yintercept = median(sr_true$R[sr_true$Blim =='Fixed'])), linetype = 2)+
+  ## Median SR per Blim facet
+  ## Vertical line at betaSR
+  geom_vline(aes(xintercept = sas$dat$betaSR)) +
+
+  theme_classic() 
+
+
+
+
+```
+
+## SSB CV
+```{r}
+
+p1 <- ggplot(ssb_est, aes(x = years, y = SE))+geom_line()
+
+
+```
+
+
+
+
+
+
+

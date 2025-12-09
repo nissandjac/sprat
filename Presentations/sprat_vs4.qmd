@@ -1,0 +1,100 @@
+---
+title: "compare_catch_sd"
+author: "Nis Sand Jacobsen"
+format: revealjs
+---
+## Candidate models 3.0
+
+Model choices:
+
+-   2 seasons or 4 seasons
+-   Selectivity block in 2015
+-   Selectivity variance reestimated after 1995
+
+## Relative catch in the two and four seasons
+
+```{r}
+two_2015 <- readRDS('two_seasons/two_seasons_block_2015.RDS')
+four_2015 <- readRDS('four_quarters/four_seasons_sel_2015.RDS')
+two_csd <- readRDS('two_seasons/two_seasons_csd.RDS')
+four_csd <- readRDS('four_quarters/four_seasons_csd.RDS')
+two_fixed <- readRDS('two_seasons/two_seasons_fixed.RDS')
+yearly <- readRDS('yearly_model/yearly_model.RDS')
+
+library(smsR)
+library(tidyverse, quietly = TRUE)
+
+```
+
+
+## Two seasons (2015 block)
+
+```{r}
+#| label: fig-two2015bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(two_2015)
+
+```
+
+
+## Two seasons (catch SD)
+
+```{r}
+#| label: fig-twocsdbub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(two_csd)
+
+```
+
+## Four seasons (2015 block)
+
+```{r}
+#| label: fig-four2015bub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(four_2015)
+
+```
+
+## Four seasons (catch SD)
+
+```{r}
+#| label: fig-foursdbub
+#| fig-cap: "Residuals scaled by SD"
+
+plotBubbles(four_csd)
+
+```
+
+## Yield plot 
+
+```{r}
+#| label: fig-yields
+#| fig-cap: "Total annual yield"
+
+yobs2 <- getYield(two_2015$dat)
+yobs4 <- getYield(four_2015$dat)
+yield_est <- rbind(getCatch(two_2015$dat, two_2015) %>% mutate(csd = 'none', seasons =2),
+              getCatch(two_csd$dat, two_csd)%>% mutate(csd = '1995', seasons =2),
+              getCatch(four_2015$dat, four_2015)%>% mutate(csd = 'none', seasons =4),
+              getCatch(four_csd$dat, four_csd)%>% mutate(csd = '1995', seasons =4),
+              getCatch(two_fixed$dat, two_fixed)%>% mutate(csd = 'fixed', seasons =2),
+              getCatch(yearly$dat, yearly) %>% mutate(csd = 'none', seasons = 1)
+
+)
+
+yield_est$catchobs2 <- yobs2$Yield
+yield_est$catchobs4 <- yobs4$Yield
+yield_est$model <- paste(yield_est$csd,yield_est$seasons, sep='_')
+
+
+ggplot(yield_est, aes(x = years, y = Catch, color = model, fill =model))+geom_line()+theme_classic()+
+  geom_point(aes(y = catchobs2), col = 'black', linetype= 2)+
+  geom_point(aes(y = catchobs4), col = 'black', linetype= 4)+
+  facet_wrap(~seasons)
+  #geom_ribbon(aes(ymin = low, ymax = high), alpha = .2, linestyle = 0)
+
+
+```

@@ -60,7 +60,7 @@ dat$nocatch <- as.matrix(nocatch)#*0+1
 #dat$nocatch[1,4] <- 0
 #dat$nocatch[dat$effort == 0] <- 0
 powerIN <- list(NA, NA, NA)
-
+#Surveyobs[,years < 2000,2] <- -1
 
 df.tmb <- get_TMB_parameters(
   mtrx = dat[['mtrx']], # List that contains M, mat, west, weca
@@ -74,16 +74,8 @@ df.tmb <- get_TMB_parameters(
   Fmaxage = 2, # Fully selected fishing mortality age
   Qminage = Qminage, # Qminage = c(0,1) minimum age in surveys
   Qmaxage = Qmaxage, #Qmaxage = c(1,3)
-  minSDsurvey = sqrt(0.1),
-  minSDcatch = sqrt(0.1),
-  #penepsC = 1e-10,
-  penepsCmax = 1e-8,
-  #peneps = 1e-10,
-  #blocks = c(1974,2015),
-  maxSDcatch = sqrt(10),
+  blocks = c(1974,2018),
   Fbarage = c(1,2),
-  isFseason = c(1,1,1,0), # Seasons to calculate fishing in
-  powers = powerIN,
   endFseason = 2, # which season does fishing stop in the final year of data
   nocatch = as.matrix(dat$nocatch),
   surveyStart = surveyStart, #c(0.75,0)
@@ -114,19 +106,21 @@ mps <-getMPS(df.tmb, parms)
 # df.tmb$randomR = 1
 # df.tmb$randomF <- 1
 sas <- runAssessment(df.tmb, parms = parms,mps = mps, 
-                     silent = TRUE, 
-                     debug = TRUE
-                     )
+                     silent = TRUE)
 sas$reps
 sas$opt$time_to_eval
 
-getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
+# getForecastTable(df.tmb, sas, TACold = 74000, Btarget = 125000, Flimit =  .69)
 
-plot(sas)
+# plot(sas)
 
+plotBubbles(sas)
 # Save
-p2 <- plotDiagnostics(df.tmb, sas)
+# p2 <- plotDiagnostics(df.tmb, sas)
+# p2$cresids_scaled
+
 mr <- mohns_rho(df.tmb, peels = 5, parms, mps, plotfigure = TRUE)
+
 
 saveRDS(sas, file.path(wd,'four_seasons.RDS'))
 write.table(mr$df.save, file = file.path(wd,'mohns_table.csv'), row.names = FALSE)
