@@ -80,7 +80,7 @@ df.tmb <- get_TMB_parameters(
   blocks = c(1980,2015),
   Fbarage = c(1,2),
   tuneCatch = 1,
-  tuneStart = 2015, # Put this into the last selectivity season
+  tuneStart = 2012, # Put this into the last selectivity season
   endFseason = 1, # which season does fishing stop in the final year of data
   nocatch = as.matrix(nocatch),
   surveyStart = surveyStart, #c(0.75,0)
