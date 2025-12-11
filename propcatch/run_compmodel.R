@@ -89,11 +89,12 @@ surveyCV =  list(c(0,1,2),
                  c(1)
 ) #c(1,2)),
 # Now modify catch and age comps 
-Catchobs <- matrix(ctot[,1], nrow = nyear, ncol = nseason)
+Catchobs <- array(ctot[,1], dim = c(1,nyear,nseason))
 
 # now into get_tmb_parameters 
 nocatch <- matrix(1, ncol = nseason, nrow = nyear)
 nocatch[length(nocatch)] <- 0
+
 
 df.tmb <- get_TMB_parameters(
   mtrx = mtrx, # List that contains M, mat, west, weca
@@ -117,7 +118,6 @@ df.tmb <- get_TMB_parameters(
   blocks = c(1974,2015),
   maxSDcatch = 10,
   Fbarage = c(1,2),
-  tuneCatch = 1,
   endFseason = 1, # which season does fishing stop in the final year of data
   nocatch = as.matrix(nocatch),
   surveyStart = surveyStart, #c(0.75,0)
@@ -133,12 +133,17 @@ df.tmb <- get_TMB_parameters(
   
 )
 
+df.tmb$nsamples[df.tmb$nsamples == 0] <- 1
+
+
 parms <- getParms(df.tmb)
 # parms$logsdc <- log(.2)
 # df.tmb$tuneStart <- which(years %in% 2006)-1
-mps <-getMPS(df.tmb, parms)# Set boundaries
+mps <-getMPS(df.tmb, parms, mapExtra ='logSDcatch')# Set boundaries
+
 sas <- runAssessment(df.tmb, parms = parms,mps = mps, silent = TRUE, debug = TRUE)
 
+sas$reps
 
 
 

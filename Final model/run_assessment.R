@@ -29,7 +29,8 @@ surveySeason = c(2,1,1) # c(2,1)Which seasons do the surveys occur in
 
 
 ages <- 0:maxage
-beta <- 90000
+#beta <- 90000
+beta <- 77231
 Surveyobs <- survey_to_matrix(dat[['survey']], years)
 #Surveyobs[4,,2] <- -1#Surveyobs[2,years %in% c(2023),2]*0.5
 Surveyobs[4,,3] <- -1#Surveyobs[3,years %in% c(2024),2]*2
@@ -80,7 +81,7 @@ df.tmb <- get_TMB_parameters(
   blocks = c(1980,2015),
   Fbarage = c(1,2),
   tuneCatch = 1,
-  tuneStart = 2012, # Put this into the last selectivity season
+  tuneStart = 2012,#2012, # Put this into the last selectivity season
   endFseason = 1, # which season does fishing stop in the final year of data
   nocatch = as.matrix(nocatch),
   surveyStart = surveyStart, #c(0.75,0)
@@ -118,11 +119,14 @@ yest$catchobs <- yobs$Yield
 
 ggplot(yest , aes(x = years, y = Catch))+geom_line()+theme_classic()+
   geom_point(aes(y = catchobs))+
-  geom_ribbon(aes(ymin = low, ymax = high), fill = 'red', alpha = .2)
+  geom_ribbon(aes(ymin = low, ymax = high), fill = 'red', alpha = .2)#+
 
 
 ggplot(yest %>% filter(years > 1990), aes(x = years, y = (catchobs-Catch)/catchobs))+geom_line()+theme_classic()+
-  geom_col()
+  geom_col()+
+  coord_cartesian(ylim = c(-0.5,0.5))+
+  geom_hline(aes(yintercept = -0.4))
+  
   #geom_point(aes(y = catchobs))+
 
 
@@ -136,4 +140,10 @@ ydf <- as.data.frame.table(yield, responseName = "value") %>% mutate(years = as.
 
 ggplot(ydf, aes(x = years, y = value, color = ages))+facet_wrap(~seasons, nrow = 2, scales = 'free_y')+
   geom_line()+geom_point()+theme_classic()
+
+## Calculate the new betaSR 
+# 1991, 2008, 2013 SSB values for Blim.
+SSB <- getSSB(df.tmb, sas)
+
+SSBlim <- mean(SSB$SSB[SSB$years %in% c(1991, 2008, 2013)])
 
