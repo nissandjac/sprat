@@ -31,6 +31,10 @@ surveySeason = c(2,1,1) # c(2,1)Which seasons do the surveys occur in
 ages <- 0:maxage
 #beta <- 90000
 beta <- 77231
+Bpa_high <- beta * exp(0.3749482*1.645)
+Bpa_low <- beta * exp(0.1566852*1.645)
+
+
 Surveyobs <- survey_to_matrix(dat[['survey']], years)
 #Surveyobs[4,,2] <- -1#Surveyobs[2,years %in% c(2023),2]*0.5
 Surveyobs[4,,3] <- -1#Surveyobs[3,years %in% c(2024),2]*2
